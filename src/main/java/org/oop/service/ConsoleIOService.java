@@ -5,11 +5,9 @@ import org.oop.api.IAuthService;
 import org.oop.api.IOService;
 import org.oop.di.Injector;
 import org.oop.model.Article;
+import org.oop.model.Comment;
 
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Scanner;
+import java.util.*;
 
 public class ConsoleIOService implements IOService {
     private final Scanner scanner;
@@ -73,6 +71,19 @@ public class ConsoleIOService implements IOService {
             }
         } catch (NumberFormatException e) {
             printLine("Некорректный ввод ID статьи. Пожалуйста, введите числовой ID.");
+        }
+    }
+
+    @Override
+    public void printComments(Map<Article, List<Comment>> comments) {
+        Set<Map.Entry<Article, List<Comment>>> sortedSet = new TreeSet<>(Comparator.comparing(o -> o.getKey().getId()));
+        sortedSet.addAll(comments.entrySet());
+        for (Map.Entry<Article, List<Comment>> articleListEntry : sortedSet) {
+            printLine("Комментарии статьи с заголовком '" + articleListEntry.getKey().getTitle() + "': ");
+            for (Comment comment : articleListEntry.getValue()) {
+                printLine(comment.getId() + ". " + comment.getCommentText());
+            }
+
         }
     }
 

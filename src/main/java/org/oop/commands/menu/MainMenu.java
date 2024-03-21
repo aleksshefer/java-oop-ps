@@ -21,6 +21,9 @@ public class MainMenu extends BaseCommand {
         if (authService.isUserLoggedIn()) {
             commandSuppliers.put(menuItemNumber.getAndIncrement(), LogoutCommand::new);
             commandSuppliers.put(menuItemNumber.getAndIncrement(), ArticleMenu::new);
+            commandSuppliers.put(menuItemNumber.getAndIncrement(), CreateCommentCommand::new);
+            commandSuppliers.put(menuItemNumber.getAndIncrement(), GetCommentsByArticleCommand::new);
+            commandSuppliers.put(menuItemNumber.getAndIncrement(), DeleteCommentCommand::new);
         } else {
             commandSuppliers.put(menuItemNumber.getAndIncrement(), LoginCommand::new);
             commandSuppliers.put(menuItemNumber.getAndIncrement(), RegisterCommand::new);

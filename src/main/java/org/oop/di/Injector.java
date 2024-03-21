@@ -2,6 +2,7 @@ package org.oop.di;
 
 import org.oop.api.*;
 import org.oop.api.dao.IArticleDao;
+import org.oop.api.dao.ICommentDao;
 import org.oop.api.dao.IUserDao;
 import org.oop.dao.*;
 import org.oop.service.*;
@@ -34,9 +35,12 @@ public class Injector {
         registerService(IConfigService.class, ConfigService::new);
         registerService(IDatabaseService.class, DatabaseService::new);
         registerService(IArticleService.class, ArticleService::new);
+        registerService(ICommentService.class, CommentService::new);
 
         registerService(IUserDao.class, UserDao::new);
         registerService(IArticleDao.class, ArticleDao::new);
+        registerService(ICommentDao.class, CommentDao::new);
+
     }
 
     public <T> void registerService(Class<T> serviceType, Supplier<? extends T> factory) {
