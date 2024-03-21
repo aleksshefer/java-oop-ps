@@ -1,8 +1,6 @@
 package org.oop;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Scanner;
+import java.util.*;
 
 public class Main {
     static Scanner scanner;
@@ -52,11 +50,14 @@ public class Main {
                 System.out.println("10. Посмотреть все статьи");
                 System.out.println("11. Удалить статью");
                 System.out.println("12. Искать статью по заголовку");
-                System.out.println("13. Выйти");
+                System.out.println("13. Комментировать статью");
+                System.out.println("14. Посмотреть комментарии статьи");
+                System.out.println("15. Удалить комментарий");
+                System.out.println("16. Выйти");
                 System.out.print("Выберите опцию: ");
                 choosenOption = scanner.nextLine();
                 switch (choosenOption) {
-                    //... Previous Switch Cases Omitted ...
+                    //... Previous Switch  CasesOmitted ...
                     case "5":
                         addUser(database);
                         break;
@@ -82,6 +83,15 @@ public class Main {
                         searchArticlesByTitle(database);
                         break;
                     case "13":
+                        createComment(database);
+                        break;
+                    case "14":
+                        getCommentsByArticle(database);
+                        break;
+                    case "15":
+                        deleteComment(database);
+                        break;
+                    case "16":
                         System.exit(0);
                         break;
                     default:
@@ -271,6 +281,7 @@ public class Main {
                 break;
         }
     }
+
     static void addUser(D database) {
         System.out.print("Имя пользователя: ");
         String u = scanner.nextLine();
@@ -280,14 +291,14 @@ public class Main {
         String e = scanner.nextLine();
 
         User aUser = new User(0, u, p, e, Role.USER);
-        if(database.cu(aUser) != null) System.out.println("Успешно добавлен!");
+        if (database.cu(aUser) != null) System.out.println("Успешно добавлен!");
         else System.out.println("Ошибка при добавлении пользователя.");
     }
 
     static void deleteUser(D database) {
         System.out.print("Введите ID пользователя для удаления: ");
         int i = Integer.parseInt(scanner.nextLine());
-        if(database.du(i)) System.out.println("Успешно удален!");
+        if (database.du(i)) System.out.println("Успешно удален!");
         else System.out.println("Ошибка при удалении пользователя.");
     }
 
@@ -296,7 +307,7 @@ public class Main {
         int id = Integer.parseInt(scanner.nextLine());
         System.out.print("Введите новый пароль: ");
         String np = scanner.nextLine();
-        if(database.cp(id, np)) System.out.println("Пароль изменен!");
+        if (database.cp(id, np)) System.out.println("Пароль изменен!");
         else System.out.println("Ошибка при изменении пароля.");
     }
 
@@ -312,7 +323,7 @@ public class Main {
         String c = scanner.nextLine();
 
         Article newArticle = new Article(0L, t, c, loggedInUserId);
-        if(database.ca(newArticle) != null) System.out.println("Статья добавлена!");
+        if (database.ca(newArticle) != null) System.out.println("Статья добавлена!");
         else System.out.println("Ошибка при добавлении статьи.");
     }
 
@@ -323,7 +334,7 @@ public class Main {
     static void deleteArticle(D database) {
         System.out.print("Введите ID статьи для удаления: ");
         Long id = Long.parseLong(scanner.nextLine());
-        if(database.da(id)) System.out.println("Статья удалена!");
+        if (database.da(id)) System.out.println("Статья удалена!");
         else System.out.println("Ошибка при удалении статьи.");
     }
 
@@ -333,5 +344,55 @@ public class Main {
         List<Article> foundArticles = database.ga(title);
         if (foundArticles.isEmpty()) System.out.println("Статьи не найдены.");
         foundArticles.forEach(a -> System.out.println("ID: " + a.id + ", Заголовок: " + a.title));
+    }
+
+    static void createComment(D database) {
+        System.out.println("Введите ID статьи, которую хотите прокомментировать: ");
+        long articleId = scanner.nextLong();
+        System.out.println("Введите комментарий: ");
+        String commentText = scanner.nextLine();
+
+        Comment comment = new Comment(articleId, loggedInUserId, commentText);
+        database.createComment(comment);
+
+        System.out.println("Статья '" + articleId + "' была успешно прокомментирована.");
+    }
+
+    static void getCommentsByArticle(D database) {
+        System.out.println("Введите заголовок статьи, у которой хотите посмотреть комментарии: ");
+        String articleTitle = scanner.nextLine();
+        List<Article> articles = database.ga(articleTitle);
+
+        for (Article article : articles) {
+
+            System.out.println("Комментарии статьи с заголовком '" + article.title + "': ");
+            for (Comment comment : database.getCommentsByArticle(article)) {
+                System.out.println(comment.getId() + ". " + comment.getCommentText());
+            }
+        }
+
+    }
+
+    static void deleteComment(D database) {
+        System.out.println("Введите ID комментария, который хотите удалить: ");
+        long commentIdToDelete = scanner.nextLong();
+        Comment commentToDelete = database.getCommentById(commentIdToDelete);
+
+        if (commentToDelete == null) {
+            System.out.println("Комментария с таким ID нет.");
+            return;
+        }
+
+        if (loggedInUserId != commentToDelete.getUserId()) {
+            System.out.println("Вы не являетесь автором этого комментария и нем модете удалить его.");
+            return;
+        }
+
+        if (database.deleteComment(commentIdToDelete)) {
+            System.out.println("Комментарий с ID " + commentIdToDelete + " был удален.");
+        } else {
+            System.out.println("Комментарий с ID " + commentIdToDelete + " не удалось удалить.");
+        }
+
     }
 }

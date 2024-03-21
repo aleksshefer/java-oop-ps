@@ -60,9 +60,10 @@ public class D {
         // Возвращает хешированный пароль
         return BCrypt.hashpw(plainTextPassword, BCrypt.gensalt());
     }
+
     public Article ca(Article article) {
         String query = "INSERT INTO articles (title, content, author_id) VALUES (?, ?, ?)";
-        try (Connection connection =  DriverManager.getConnection(
+        try (Connection connection = DriverManager.getConnection(
                 "jdbc:postgresql://localhost:5432/oopshop",
                 "exampleuser",
                 "examplepass"
@@ -95,7 +96,7 @@ public class D {
 
     public Article gai(long id) {
         String query = "SELECT id, title, content, author_id FROM articles WHERE id = ?";
-        try (Connection connection =  DriverManager.getConnection(
+        try (Connection connection = DriverManager.getConnection(
                 "jdbc:postgresql://localhost:5432/oopshop",
                 "exampleuser",
                 "examplepass"
@@ -122,7 +123,7 @@ public class D {
     public List<Article> ga(String title) {
         List<Article> articles = new ArrayList<>();
         String query = "SELECT id, title, content, author_id FROM articles WHERE title LIKE ?";
-        try (Connection connection =  DriverManager.getConnection(
+        try (Connection connection = DriverManager.getConnection(
                 "jdbc:postgresql://localhost:5432/oopshop",
                 "exampleuser",
                 "examplepass"
@@ -149,7 +150,7 @@ public class D {
     public List<Article> ga() {
         List<Article> articles = new ArrayList<>();
         String query = "SELECT id, title, content, author_id FROM articles";
-        try (Connection connection =  DriverManager.getConnection(
+        try (Connection connection = DriverManager.getConnection(
                 "jdbc:postgresql://localhost:5432/oopshop",
                 "exampleuser",
                 "examplepass"
@@ -197,7 +198,7 @@ public class D {
 
     public boolean da(long id) {
         String query = "DELETE FROM articles WHERE id = ?";
-        try (Connection connection =  DriverManager.getConnection(
+        try (Connection connection = DriverManager.getConnection(
                 "jdbc:postgresql://localhost:5432/oopshop",
                 "exampleuser",
                 "examplepass"
@@ -212,6 +213,7 @@ public class D {
         }
         return false;
     }
+
     public User cu(User user) {
         // Хеширование пароля перед сохранением в базу данных
         user.password = hashPassword(user.password);
@@ -251,7 +253,7 @@ public class D {
         User user = null;
         String query = "SELECT id, username, password, email, role FROM users WHERE id = ?";
 
-        try (Connection connection =  DriverManager.getConnection(
+        try (Connection connection = DriverManager.getConnection(
                 "jdbc:postgresql://localhost:5432/oopshop",
                 "exampleuser",
                 "examplepass"
@@ -281,7 +283,7 @@ public class D {
         User user = null;
         String query = "SELECT id, username, password, email, role FROM users WHERE username = ?";
 
-        try (Connection connection =  DriverManager.getConnection(
+        try (Connection connection = DriverManager.getConnection(
                 "jdbc:postgresql://localhost:5432/oopshop",
                 "exampleuser",
                 "examplepass"
@@ -310,7 +312,7 @@ public class D {
     public List<User> gau() {
         List<User> users = new ArrayList<>();
         String query = "SELECT id, username, password, email, role FROM users";
-        try (Connection connection =  DriverManager.getConnection(
+        try (Connection connection = DriverManager.getConnection(
                 "jdbc:postgresql://localhost:5432/oopshop",
                 "exampleuser",
                 "examplepass"
@@ -336,7 +338,7 @@ public class D {
 
     public boolean uu(User user) {
         String query = "UPDATE users SET username = ?, password = ?, email = ?, role = ? WHERE id = ?";
-        try (Connection connection =  DriverManager.getConnection(
+        try (Connection connection = DriverManager.getConnection(
                 "jdbc:postgresql://localhost:5432/oopshop",
                 "exampleuser",
                 "examplepass"
@@ -359,7 +361,7 @@ public class D {
 
     public boolean du(int userId) {
         String query = "DELETE FROM users WHERE id = ?";
-        try (Connection connection =  DriverManager.getConnection(
+        try (Connection connection = DriverManager.getConnection(
                 "jdbc:postgresql://localhost:5432/oopshop",
                 "exampleuser",
                 "examplepass"
@@ -377,7 +379,7 @@ public class D {
 
     public boolean cur(int userId, Role newRole) {
         String query = "UPDATE users SET role = ? WHERE id = ?";
-        try (Connection connection =  DriverManager.getConnection(
+        try (Connection connection = DriverManager.getConnection(
                 "jdbc:postgresql://localhost:5432/oopshop",
                 "exampleuser",
                 "examplepass"
@@ -409,6 +411,110 @@ public class D {
             preparedStatement.setString(1, hashedPassword);
             preparedStatement.setInt(2, userId);
 
+            int affectedRows = preparedStatement.executeUpdate();
+            return affectedRows > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public void createComment(Comment comment) {
+        String query = "INSERT INTO comments (article_id, user_id, comment_text) VALUES (?, ?, ?)";
+
+        try (Connection connection = DriverManager.getConnection(
+                "jdbc:postgresql://localhost:5432/oopshop",
+                "exampleuser",
+                "examplepass"
+        );
+             PreparedStatement preparedStatement = connection.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
+
+            preparedStatement.setLong(1, comment.getArticleId());
+            preparedStatement.setLong(2, comment.getUserId());
+            preparedStatement.setString(3, comment.getCommentText());
+
+            int affectedRows = preparedStatement.executeUpdate();
+            if (affectedRows == 0) {
+                throw new SQLException("Creating comment failed, no rows affected.");
+            }
+
+            try (ResultSet generatedKeys = preparedStatement.getGeneratedKeys()) {
+                if (generatedKeys.next()) {
+                    comment.setId(generatedKeys.getLong(1));
+                } else {
+                    throw new SQLException("Creating comment failed, no ID obtained.");
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public Comment getCommentById(long id) {
+        String query = "SELECT id, article_id, user_id, comment_text FROM comments WHERE id = ?";
+        Comment comment = null;
+        try (Connection connection = DriverManager.getConnection(
+                "jdbc:postgresql://localhost:5432/oopshop",
+                "exampleuser",
+                "examplepass"
+        );
+             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+
+            preparedStatement.setLong(1, id);
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                if (resultSet != null) {
+                    resultSet.next();
+                    comment = new Comment(
+                            resultSet.getLong("id"),
+                            resultSet.getLong("article_id"),
+                            resultSet.getLong("user_id"),
+                            resultSet.getString("comment_text")
+                    );
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return comment;
+    }
+
+    public List<Comment> getCommentsByArticle(Article article) {
+        List<Comment> comments = new ArrayList<>();
+        String query = "SELECT id, article_id, user_id, comment_text FROM comments WHERE article_id = ?";
+        try (Connection connection = DriverManager.getConnection(
+                "jdbc:postgresql://localhost:5432/oopshop",
+                "exampleuser",
+                "examplepass"
+        );
+             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+
+            preparedStatement.setLong(1, article.id);
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                while (resultSet.next()) {
+                    comments.add(new Comment(
+                            resultSet.getLong("id"),
+                            resultSet.getLong("article_id"),
+                            resultSet.getLong("user_id"),
+                            resultSet.getString("comment_text")
+                    ));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return comments;
+    }
+
+    public boolean deleteComment(long commentId) {
+        String query = "DELETE FROM comments WHERE id = ?";
+        try (Connection connection = DriverManager.getConnection(
+                "jdbc:postgresql://localhost:5432/oopshop",
+                "exampleuser",
+                "examplepass"
+        );
+             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+
+            preparedStatement.setLong(1, commentId);
             int affectedRows = preparedStatement.executeUpdate();
             return affectedRows > 0;
         } catch (SQLException e) {
